@@ -16,6 +16,10 @@ class DiscoveryError(RuntimeError):
     """Raised when Tuya device discovery cannot be completed."""
 
 
+def stringify_field(value: object | None) -> str:
+    return "" if value in (None, "") else str(value)
+
+
 def discover_devices(timeout_seconds: int = DEFAULT_SCAN_TIMEOUT_SECONDS) -> list[dict[str, str]]:
     try:
         tinytuya = importlib.import_module("tinytuya")
@@ -47,15 +51,31 @@ def normalize_devices(raw_devices: dict[str, dict[str, object]] | None) -> list[
 
         devices.append(
             {
-                "ip": str(payload.get("ip") or fallback_ip or ""),
-                "device_id": str(payload.get("gwId") or payload.get("id") or ""),
-                "version": str(payload.get("version") or ""),
-                "product_key": str(payload.get("productKey") or ""),
-                "name": str(payload.get("name") or ""),
+                "ip": stringify_field(payload.get("ip") or fallback_ip),
+                "device_id": stringify_field(payload.get("gwId") or payload.get("id")),
+                "version": stringify_field(payload.get("version")),
+                "product_key": stringify_field(payload.get("productKey")),
+                "name": stringify_field(payload.get("name")),
             }
         )
 
     return sorted(devices, key=lambda device: (device["ip"], device["device_id"]))
+
+
+def device_row_values(device: dict[str, str]) -> tuple[str, str, str, str, str]:
+    return (
+        device["ip"],
+        device["device_id"],
+        device["version"],
+        device["product_key"],
+        device["name"],
+    )
+
+
+def build_status_message(devices: list[dict[str, str]]) -> str:
+    if devices:
+        return f"Found {len(devices)} Tuya device(s) on the local network."
+    return "No Tuya devices were found on the local network."
 
 
 def build_app() -> "tk.Tk":
@@ -121,19 +141,10 @@ def build_app() -> "tk.Tk":
                 self.tree.insert(
                     "",
                     "end",
-                    values=(
-                        device["ip"],
-                        device["device_id"],
-                        device["version"],
-                        device["product_key"],
-                        device["name"],
-                    ),
+                    values=device_row_values(device),
                 )
 
-            if devices:
-                self.status_var.set(f"Found {len(devices)} Tuya device(s) on the local network.")
-            else:
-                self.status_var.set("No Tuya devices were found on the local network.")
+            self.status_var.set(build_status_message(devices))
 
         def clear_results(self) -> None:
             for item in self.tree.get_children():
