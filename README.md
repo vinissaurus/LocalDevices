@@ -17,3 +17,4 @@ python localdevices.py
 ```
 
 Click **Scan local network** to look for Tuya devices that are reachable on your LAN.
+The scan can take around 18 seconds because Tuya devices do not always announce themselves immediately.

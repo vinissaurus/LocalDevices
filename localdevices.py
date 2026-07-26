@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from tkinter import ttk
 
 
-DEFAULT_SCAN_TIMEOUT_SECONDS = 8
+DEFAULT_SCAN_TIMEOUT_SECONDS = 18
 
 
 class DiscoveryError(RuntimeError):
